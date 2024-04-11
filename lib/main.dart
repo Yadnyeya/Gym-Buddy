@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'profile_screen.dart';
+import 'workout_screen.dart';
+import 'gallery_screen.dart';
 
 void main() {
   runApp(GymBuddyApp());
@@ -25,7 +28,6 @@ class GymBuddyApp extends StatelessWidget {
     );
   }
 }
-
 enum NavigationTab { profile, workout, gallery }
 
 class HomePage extends StatefulWidget {
@@ -42,30 +44,27 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget _buildCurrentScreen() {
+    switch (_currentTab) {
+      case NavigationTab.profile:
+        return ProfileScreen(); // Now using the ProfileScreen widget
+      case NavigationTab.workout:
+        return WorkoutScreen(); // WorkoutScreen widget
+      case NavigationTab.gallery:
+        return GalleryScreen(); // Now using the GalleryScreen widget
+      default:
+        return Center(child: Text('Unknown'));
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Gym Buddy',
-          style: GoogleFonts.lato(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: Colors.white,
-          ),
-        ),
+        title: Text('Gym Buddy', style: GoogleFonts.bungeeSpice(fontSize: 24)),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildWelcomeSection(context),
-            _buildSummaryCards(context),
-            // ... Add other UI components here
-          ],
-        ),
-      ),
+      body: _buildCurrentScreen(),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
+        items: [
           BottomNavigationBarItem(
             icon: Icon(Icons.account_circle),
             label: 'Profile',
@@ -81,89 +80,10 @@ class _HomePageState extends State<HomePage> {
         ],
         currentIndex: NavigationTab.values.indexOf(_currentTab),
         onTap: (index) => _selectTab(NavigationTab.values[index]),
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.orange,
+        unselectedItemColor: Colors.grey[600],
       ),
-    );
-  }
-
-  Widget _buildWelcomeSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Placeholder image
-            radius: 30,
-          ),
-          Expanded(
-            child: Text(
-              ' Welcome back!\nYour daily summary',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-              textAlign: TextAlign.right,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryCards(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              "Today's achievements\nGreat progress!",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildSummaryCard('Duration', '3 hours 30', Icons.access_time),
-                _buildSummaryCard('Distance', '8.2 km', Icons.map),
-                _buildSummaryCard('Heart Rate', '120 bpm', Icons.favorite),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard(String title, String value, IconData iconData) {
-    return Column(
-      children: [
-        Icon(
-          iconData,
-          size: 48,
-          color: Colors.orange,
-        ),
-        SizedBox(height: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: Colors.grey,
-            fontSize: 14,
-          ),
-        ),
-      ],
     );
   }
 }
