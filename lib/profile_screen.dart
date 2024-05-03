@@ -1,11 +1,179 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
+  final TextEditingController _bodyFatController = TextEditingController();
+  bool _isEditing = false;
+  String _userName = '';
+  int _age = 0;
+  double _weight = 0.0;
+  double _height = 0.0;
+  double _bodyFat = 0.0;
+  String _sex = 'Male';
+  String _fitnessGoal = 'Maintain';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userName = prefs.getString('userName') ?? '';
+      _age = prefs.getInt('age') ?? 0;
+      _weight = prefs.getDouble('weight') ?? 0.0;
+      _height = prefs.getDouble('height') ?? 0.0;
+      _bodyFat = prefs.getDouble('bodyFat') ?? 0.0;
+      _sex = prefs.getString('sex') ?? 'Male';
+      _fitnessGoal = prefs.getString('fitnessGoal') ?? 'Maintain';
+    });
+  }
+
+  _saveProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', _nameController.text);
+    await prefs.setInt('age', int.parse(_ageController.text));
+    await prefs.setDouble('weight', double.parse(_weightController.text));
+    await prefs.setDouble('height', double.parse(_heightController.text));
+    await prefs.setDouble('bodyFat', double.parse(_bodyFatController.text));
+    await prefs.setString('sex', _sex);
+    await prefs.setString('fitnessGoal', _fitnessGoal);
+    _loadProfile();
+    setState(() {
+      _isEditing = false;  // Switch back to view mode after saving
+    });
+  }
+
+  _toggleEdit() {
+    setState(() {
+      _isEditing = !_isEditing;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Build the profile screen UI here
-    return Center(
-      child: Text('Profile Screen'),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(_isEditing ? Icons.check : Icons.edit),
+            onPressed: _toggleEdit,
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: _isEditing ? _buildEditForm() : _buildProfileView(),
+      ),
+    );
+  }
+
+  Widget _buildProfileView() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildProfileDetail('Name: Yadyneya', Icons.account_circle_outlined),
+          _buildProfileDetail('Age: 20', Icons.calendar_today),
+          _buildProfileDetail('Weight: 65.0 kg', Icons.monitor_weight),
+          _buildProfileDetail('Height: 155.0 cm', Icons.height),
+          _buildProfileDetail('Body Fat: 10.0 %', Icons.fitness_center),
+          _buildProfileDetail('Sex: Male', Icons.transgender),
+          _buildProfileDetail('Fitness Goal: Maintain', Icons.flag),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileDetail(String text, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.orange),
+          SizedBox(width: 10),
+          Text(text, style: TextStyle(color: Colors.white, fontSize: 18)),  // Increased font size
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildEditForm() {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        children: [
+          TextFormField(
+            controller: _nameController,
+            decoration: InputDecoration(labelText: 'Name'),
+          ),
+          TextFormField(
+            controller: _ageController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Age'),
+          ),
+          TextFormField(
+            controller: _weightController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Weight (kg)'),
+          ),
+          TextFormField(
+            controller: _heightController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Height (cm)'),
+          ),
+          TextFormField(
+            controller: _bodyFatController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Body Fat (%)'),
+          ),
+          DropdownButtonFormField(
+            value: _sex,
+            items: ['Male', 'Female', 'Other'].map((String value) {
+              return DropdownMenuItem(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _sex = newValue!;
+              });
+            },
+            decoration: InputDecoration(labelText: 'Sex'),
+          ),
+          DropdownButtonFormField(
+            value: _fitnessGoal,
+            items: ['Maintain', 'Lose Weight', 'Gain Muscle'].map((String value) {
+              return DropdownMenuItem(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _fitnessGoal = newValue!;
+              });
+            },
+            decoration: InputDecoration(labelText: 'Fitness Goal'),
+          ),
+        ],
+      ),
     );
   }
 }
