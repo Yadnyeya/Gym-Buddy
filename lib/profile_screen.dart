@@ -14,11 +14,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _bodyFatController = TextEditingController();
   bool _isEditing = false;
-  String _userName = '';
-  int _age = 0;
-  double _weight = 0.0;
-  double _height = 0.0;
-  double _bodyFat = 0.0;
   String _sex = 'Male';
   String _fitnessGoal = 'Maintain';
 
@@ -31,29 +26,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   _loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString('userName') ?? '';
-      _age = prefs.getInt('age') ?? 0;
-      _weight = prefs.getDouble('weight') ?? 0.0;
-      _height = prefs.getDouble('height') ?? 0.0;
-      _bodyFat = prefs.getDouble('bodyFat') ?? 0.0;
+      _nameController.text = prefs.getString('userName') ?? '';
+      _ageController.text = (prefs.getInt('age') ?? 0).toString();
+      _weightController.text = (prefs.getDouble('weight') ?? 0.0).toString();
+      _heightController.text = (prefs.getDouble('height') ?? 0.0).toString();
+      _bodyFatController.text = (prefs.getDouble('bodyFat') ?? 0.0).toString();
       _sex = prefs.getString('sex') ?? 'Male';
       _fitnessGoal = prefs.getString('fitnessGoal') ?? 'Maintain';
     });
   }
 
   _saveProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', _nameController.text);
-    await prefs.setInt('age', int.parse(_ageController.text));
-    await prefs.setDouble('weight', double.parse(_weightController.text));
-    await prefs.setDouble('height', double.parse(_heightController.text));
-    await prefs.setDouble('bodyFat', double.parse(_bodyFatController.text));
-    await prefs.setString('sex', _sex);
-    await prefs.setString('fitnessGoal', _fitnessGoal);
-    _loadProfile();
-    setState(() {
-      _isEditing = false;  // Switch back to view mode after saving
-    });
+    if (_formKey.currentState!.validate()) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('userName', _nameController.text);
+      await prefs.setInt('age', int.tryParse(_ageController.text) ?? 0);
+      await prefs.setDouble('weight', double.tryParse(_weightController.text) ?? 0.0);
+      await prefs.setDouble('height', double.tryParse(_heightController.text) ?? 0.0);
+      await prefs.setDouble('bodyFat', double.tryParse(_bodyFatController.text) ?? 0.0);
+      await prefs.setString('sex', _sex);
+      await prefs.setString('fitnessGoal', _fitnessGoal);
+      _loadProfile();
+      setState(() {
+        _isEditing = false;  // Switch back to view mode after saving
+      });
+    }
   }
 
   _toggleEdit() {
@@ -70,7 +67,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.check : Icons.edit),
-            onPressed: _toggleEdit,
+            onPressed: () {
+              if (_isEditing) {
+                _saveProfile();
+              } else {
+                _toggleEdit();
+              }
+            },
           ),
         ],
       ),
@@ -87,13 +90,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProfileDetail('Name: Yadyneya', Icons.account_circle_outlined),
-          _buildProfileDetail('Age: 20', Icons.calendar_today),
-          _buildProfileDetail('Weight: 65.0 kg', Icons.monitor_weight),
-          _buildProfileDetail('Height: 155.0 cm', Icons.height),
-          _buildProfileDetail('Body Fat: 10.0 %', Icons.fitness_center),
-          _buildProfileDetail('Sex: Male', Icons.transgender),
-          _buildProfileDetail('Fitness Goal: Maintain', Icons.flag),
+          _buildProfileDetail('Name: ${_nameController.text}', Icons.account_circle_outlined),
+          _buildProfileDetail('Age: ${_ageController.text}', Icons.calendar_today),
+          _buildProfileDetail('Weight: ${_weightController.text} kg', Icons.monitor_weight),
+          _buildProfileDetail('Height: ${_heightController.text} cm', Icons.height),
+          _buildProfileDetail('Body Fat: ${_bodyFatController.text} %', Icons.fitness_center),
+          _buildProfileDetail('Sex: $_sex', Icons.transgender),
+          _buildProfileDetail('Fitness Goal: $_fitnessGoal', Icons.flag),
         ],
       ),
     );
@@ -106,18 +109,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(icon, color: Colors.orange),
           SizedBox(width: 10),
-          Text(text, style: TextStyle(color: Colors.white, fontSize: 18)),  // Increased font size
+          Text(text, style: TextStyle(color: Colors.white, fontSize: 18)),
         ],
       ),
     );
   }
 
-
   Widget _buildEditForm() {
     return Form(
       key: _formKey,
       child: ListView(
-        children: [
+        children: <Widget>[
           TextFormField(
             controller: _nameController,
             decoration: InputDecoration(labelText: 'Name'),
