@@ -3,9 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'profile_screen.dart';
 import 'workout_screen.dart';
 import 'gallery_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';  
 
-void main() {
-  runApp(GymBuddyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(GymBuddyApp());  
 }
 
 class GymBuddyApp extends StatelessWidget {
@@ -28,6 +34,7 @@ class GymBuddyApp extends StatelessWidget {
     );
   }
 }
+
 enum NavigationTab { profile, workout, gallery }
 
 class HomePage extends StatefulWidget {
@@ -56,6 +63,7 @@ class _HomePageState extends State<HomePage> {
         return Center(child: Text('Unknown'));
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

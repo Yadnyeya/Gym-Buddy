@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -14,13 +14,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _heightController = TextEditingController();
   final TextEditingController _bodyFatController = TextEditingController();
   bool _isEditing = false;
-  String _userName = '';
-  int _age = 0;
-  double _weight = 0.0;
-  double _height = 0.0;
-  double _bodyFat = 0.0;
-  String _sex = 'Male';
-  String _fitnessGoal = 'Maintain';
 
   @override
   void initState() {
@@ -29,32 +22,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   _loadProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _userName = prefs.getString('userName') ?? '';
-      _age = prefs.getInt('age') ?? 0;
-      _weight = prefs.getDouble('weight') ?? 0.0;
-      _height = prefs.getDouble('height') ?? 0.0;
-      _bodyFat = prefs.getDouble('bodyFat') ?? 0.0;
-      _sex = prefs.getString('sex') ?? 'Male';
-      _fitnessGoal = prefs.getString('fitnessGoal') ?? 'Maintain';
-    });
+    try {
+      var userDocument = await FirebaseFirestore.instance.collection('users').doc('userProfile').get();
+      var userData = userDocument.data();
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData['userName'];
+          _ageController.text = userData['age'].toString();
+          _weightController.text = userData['weight'].toString();
+          _heightController.text = userData['height'].toString();
+          _bodyFatController.text = userData['bodyFat'].toString();
+          // Assuming 'sex' and 'fitnessGoal' are also fields to update similarly
+        });
+      } else {
+        print("No data available");
+      }
+    } catch (e) {
+      print("Error loading profile: $e");
+    }
   }
 
-  _saveProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userName', _nameController.text);
-    await prefs.setInt('age', int.parse(_ageController.text));
-    await prefs.setDouble('weight', double.parse(_weightController.text));
-    await prefs.setDouble('height', double.parse(_heightController.text));
-    await prefs.setDouble('bodyFat', double.parse(_bodyFatController.text));
-    await prefs.setString('sex', _sex);
-    await prefs.setString('fitnessGoal', _fitnessGoal);
-    _loadProfile();
-    setState(() {
-      _isEditing = false;  // Switch back to view mode after saving
+
+_saveProfile() async {
+  print("Saving profile with data:");
+  print("Name: ${_nameController.text}");
+  print("Age: ${_ageController.text}");
+  print("Weight: ${_weightController.text}");
+  print("Height: ${_heightController.text}");
+  print("Body Fat: ${_bodyFatController.text}");
+
+  try {
+    await FirebaseFirestore.instance.collection('users').doc('userProfile').set({
+      'userName': _nameController.text,
+      'age': int.parse(_ageController.text),
+      'weight': double.parse(_weightController.text),
+      'height': double.parse(_heightController.text),
+      'bodyFat': double.parse(_bodyFatController.text),
+      // Include 'sex' and 'fitnessGoal' if they are being edited as well
     });
+    print("Profile saved successfully");
+    _loadProfile();
+  } catch (e) {
+    print("Error saving profile: $e");
   }
+}
+
 
   _toggleEdit() {
     setState(() {
@@ -87,93 +99,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProfileDetail('Name: Yadyneya', Icons.account_circle_outlined),
-          _buildProfileDetail('Age: 20', Icons.calendar_today),
-          _buildProfileDetail('Weight: 65.0 kg', Icons.monitor_weight),
-          _buildProfileDetail('Height: 155.0 cm', Icons.height),
-          _buildProfileDetail('Body Fat: 10.0 %', Icons.fitness_center),
-          _buildProfileDetail('Sex: Male', Icons.transgender),
-          _buildProfileDetail('Fitness Goal: Maintain', Icons.flag),
+          Text('Name: ${_nameController.text}'),
+          Text('Age: ${_ageController.text}'),
+          Text('Weight: ${_weightController.text} kg'),
+          Text('Height: ${_heightController.text} cm'),
+          Text('Body Fat: ${_bodyFatController.text} %'),
+          // Add other fields similarly
         ],
       ),
     );
   }
-
-  Widget _buildProfileDetail(String text, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.orange),
-          SizedBox(width: 10),
-          Text(text, style: TextStyle(color: Colors.white, fontSize: 18)),  // Increased font size
-        ],
-      ),
-    );
-  }
-
 
   Widget _buildEditForm() {
     return Form(
       key: _formKey,
       child: ListView(
         children: [
-          TextFormField(
-            controller: _nameController,
-            decoration: InputDecoration(labelText: 'Name'),
-          ),
-          TextFormField(
-            controller: _ageController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Age'),
-          ),
-          TextFormField(
-            controller: _weightController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Weight (kg)'),
-          ),
-          TextFormField(
-            controller: _heightController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Height (cm)'),
-          ),
-          TextFormField(
-            controller: _bodyFatController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(labelText: 'Body Fat (%)'),
-          ),
-          DropdownButtonFormField(
-            value: _sex,
-            items: ['Male', 'Female', 'Other'].map((String value) {
-              return DropdownMenuItem(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _sex = newValue!;
-              });
-            },
-            decoration: InputDecoration(labelText: 'Sex'),
-          ),
-          DropdownButtonFormField(
-            value: _fitnessGoal,
-            items: ['Maintain', 'Lose Weight', 'Gain Muscle'].map((String value) {
-              return DropdownMenuItem(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _fitnessGoal = newValue!;
-              });
-            },
-            decoration: InputDecoration(labelText: 'Fitness Goal'),
-          ),
+          TextFormField(controller: _nameController, decoration: InputDecoration(labelText: 'Name')),
+          TextFormField(controller: _ageController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Age')),
+          TextFormField(controller: _weightController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Weight (kg)')),
+          TextFormField(controller: _heightController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Height (cm)')),
+          TextFormField(controller: _bodyFatController, keyboardType: TextInputType.number, decoration: InputDecoration(labelText: 'Body Fat (%)')),
+          // Include DropdownButtonFormField for 'sex' and 'fitnessGoal'
         ],
       ),
     );
   }
 }
+
+
