@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,21 +38,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   _saveProfile() async {
-    if (_formKey.currentState!.validate()) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userName', _nameController.text);
-      await prefs.setInt('age', int.tryParse(_ageController.text) ?? 0);
-      await prefs.setDouble('weight', double.tryParse(_weightController.text) ?? 0.0);
-      await prefs.setDouble('height', double.tryParse(_heightController.text) ?? 0.0);
-      await prefs.setDouble('bodyFat', double.tryParse(_bodyFatController.text) ?? 0.0);
-      await prefs.setString('sex', _sex);
-      await prefs.setString('fitnessGoal', _fitnessGoal);
-      _loadProfile();
-      setState(() {
-        _isEditing = false;  // Switch back to view mode after saving
-      });
-    }
+  if (_formKey.currentState!.validate()) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userName', _nameController.text);
+    await prefs.setInt('age', int.tryParse(_ageController.text) ?? 0);
+    await prefs.setDouble('weight', double.tryParse(_weightController.text) ?? 0.0);
+    await prefs.setDouble('height', double.tryParse(_heightController.text) ?? 0.0);
+    await prefs.setDouble('bodyFat', double.tryParse(_bodyFatController.text) ?? 0.0);
+    await prefs.setString('sex', _sex);
+    await prefs.setString('fitnessGoal', _fitnessGoal);
+    _loadProfile();
+    
+    // Add or update Firestore document
+    CollectionReference users = FirebaseFirestore.instance.collection('user');
+    await users.doc(_nameController.text).set({
+      'name': _nameController.text,
+      'age': int.tryParse(_ageController.text) ?? 0,
+      'weight': double.tryParse(_weightController.text) ?? 0.0,
+      'height': double.tryParse(_heightController.text) ?? 0.0,
+      'bodyFat': double.tryParse(_bodyFatController.text) ?? 0.0,
+      'sex': _sex,
+      'fitnessGoal': _fitnessGoal
+    });
+    setState(() {
+      _isEditing = false;  // Switch back to view mode after saving
+    });
   }
+}
+
 
   _toggleEdit() {
     setState(() {
