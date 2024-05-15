@@ -1,10 +1,14 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'profile_screen.dart';
-import 'workout_screen.dart';
-import 'gallery_screen.dart';
+import 'register_screen.dart';  // Assuming RegisterScreen is properly defined elsewhere
+import 'profile_screen.dart';   // Assuming ProfileScreen is properly defined elsewhere
+import 'workout_screen.dart';   // Assuming WorkoutScreen is properly defined elsewhere
+import 'gallery_screen.dart';   // Assuming GalleryScreen is properly defined elsewhere
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   runApp(GymBuddyApp());
 }
 
@@ -24,19 +28,30 @@ class GymBuddyApp extends StatelessWidget {
           Theme.of(context).textTheme.apply(bodyColor: Colors.white),
         ),
       ),
-      home: HomePage(),
+      home: RegisterScreen(),
     );
   }
 }
+
 enum NavigationTab { profile, workout, gallery }
 
 class HomePage extends StatefulWidget {
+  final NavigationTab initialTab;
+
+  HomePage({this.initialTab = NavigationTab.workout});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  NavigationTab _currentTab = NavigationTab.workout;
+  late NavigationTab _currentTab;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentTab = widget.initialTab;  // Initialize with the initialTab provided
+  }
 
   void _selectTab(NavigationTab tab) {
     setState(() {
@@ -47,15 +62,16 @@ class _HomePageState extends State<HomePage> {
   Widget _buildCurrentScreen() {
     switch (_currentTab) {
       case NavigationTab.profile:
-        return ProfileScreen(); // Now using the ProfileScreen widget
+        return ProfileScreen();  // Now using the ProfileScreen widget
       case NavigationTab.workout:
-        return WorkoutScreen(); // WorkoutScreen widget
+        return WorkoutScreen();  // WorkoutScreen widget
       case NavigationTab.gallery:
-        return GalleryScreen(); // Now using the GalleryScreen widget
+        return GalleryScreen();  // Now using the GalleryScreen widget
       default:
         return Center(child: Text('Unknown'));
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
