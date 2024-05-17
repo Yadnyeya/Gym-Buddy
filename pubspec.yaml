@@ -45,6 +45,9 @@ dependencies:
   firebase_storage: ^11.7.5
   firebase_auth: ^4.19.5
   fluttertoast: ^8.2.5
+  heart_bpm: ^2.0.0+0
+  pedometer: ^4.0.1
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:
@@ -69,9 +72,20 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/pushups.jpg
+    - assets/crunches.jpg
+    - assets/squats.jpg
+    - assets/plank.jpg
+    - assets/running.png
+    - assets/bg.png
+    - assets/lunges.jpg
+    - assets/burpees.jpg
+    - assets/mountain_climbers.jpg
+    - assets/bicycle_crunches.jpg
+    - assets/leg_raises.jpg
+    - assets/default_image.png
+    - assets/authentication_bg.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

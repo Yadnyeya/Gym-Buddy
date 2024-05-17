@@ -49,7 +49,8 @@ class _GalleryScreenState extends State<GalleryScreen> {
 
   Widget _buildImageGrid() {
     return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+      gridDelegate:
+          SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
       itemCount: _images.length,
       itemBuilder: (BuildContext context, int index) {
         return Image.file(_images[index], fit: BoxFit.cover);
@@ -61,20 +62,31 @@ class _GalleryScreenState extends State<GalleryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gallery Screen'),
+        backgroundColor: Color(0xFF6279E4),
+        automaticallyImplyLeading: false,
+        title: Center(child: Text('Gallery Screen')),
       ),
-      body: _images.isEmpty ? Center(child: Text("No images selected")) : _buildImageGrid(),
+      body: _images.isEmpty
+          ? Center(
+              child: Image.asset(
+                'assets/default_image.png',
+                fit: BoxFit.cover,
+              ),
+            )
+          : _buildImageGrid(),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
           FloatingActionButton(
             onPressed: () => _pickImage(ImageSource.camera),
+            backgroundColor: Color(0xFF6279E4),
             tooltip: 'Take a Picture',
             child: Icon(Icons.camera_alt),
           ),
           SizedBox(height: 20),
           FloatingActionButton(
             onPressed: () => _pickImage(ImageSource.gallery),
+            backgroundColor: Color(0xFF6279E4),
             tooltip: 'Pick Image from Gallery',
             child: Icon(Icons.photo_library),
           ),

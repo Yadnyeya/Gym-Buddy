@@ -1,10 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'register_screen.dart';  // Assuming RegisterScreen is properly defined elsewhere
-import 'profile_screen.dart';   // Assuming ProfileScreen is properly defined elsewhere
-import 'workout_screen.dart';   // Assuming WorkoutScreen is properly defined elsewhere
-import 'gallery_screen.dart';   // Assuming GalleryScreen is properly defined elsewhere
+import 'dashboard_screen.dart';
+import 'register_screen.dart';
+import 'profile_screen.dart';
+import 'workout_screen.dart';
+import 'gallery_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,11 +30,12 @@ class GymBuddyApp extends StatelessWidget {
         ),
       ),
       home: RegisterScreen(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-enum NavigationTab { profile, workout, gallery }
+enum NavigationTab { dashboard, workout, gallery }
 
 class HomePage extends StatefulWidget {
   final NavigationTab initialTab;
@@ -45,60 +47,38 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late NavigationTab _currentTab;
+  int _selectedIndex = 0;
+  static List<Widget> _widgetOptions = [
+    DashboardScreen(),
+    WorkoutScreen(),
+    GalleryScreen(),
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    _currentTab = widget.initialTab;  // Initialize with the initialTab provided
-  }
-
-  void _selectTab(NavigationTab tab) {
+  void _onItemTapped(int index) {
     setState(() {
-      _currentTab = tab;
+      _selectedIndex = index;
     });
-  }
-
-  Widget _buildCurrentScreen() {
-    switch (_currentTab) {
-      case NavigationTab.profile:
-        return ProfileScreen();  // Now using the ProfileScreen widget
-      case NavigationTab.workout:
-        return WorkoutScreen();  // WorkoutScreen widget
-      case NavigationTab.gallery:
-        return GalleryScreen();  // Now using the GalleryScreen widget
-      default:
-        return Center(child: Text('Unknown'));
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Gym Buddy', style: GoogleFonts.bungeeSpice(fontSize: 24)),
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
       ),
-      body: _buildCurrentScreen(),
       bottomNavigationBar: BottomNavigationBar(
-        items: [
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle),
-            label: 'Profile',
-          ),
+              icon: Icon(Icons.dashboard_customize), label: 'Dashboard'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.fitness_center),
-            label: 'Workout',
-          ),
+              icon: Icon(Icons.fitness_center), label: 'Workouts'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.timeline),
-            label: 'Gallery',
-          ),
+              icon: Icon(Icons.browse_gallery_sharp), label: 'Gallery'),
         ],
-        currentIndex: NavigationTab.values.indexOf(_currentTab),
-        onTap: (index) => _selectTab(NavigationTab.values[index]),
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.grey[600],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.amber[800],
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }

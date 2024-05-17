@@ -10,7 +10,7 @@ class _ScheduleWidgetState extends State<ScheduleWidget> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
-  Map<DateTime, List<Event>> _selectedEvents = {};  // Initialize as empty map.
+  Map<DateTime, List<Event>> _selectedEvents = {}; // Initialize as empty map.
 
   @override
   void initState() {
@@ -59,5 +59,5 @@ class _ScheduleWidgetState extends State<ScheduleWidget> {
 class Event {
   final String title;
 
-  Event(this.title);
+  Event(this.title, {required DateTime date, required TimeOfDay time});
 }
