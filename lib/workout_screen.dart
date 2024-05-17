@@ -1,209 +1,406 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:table_calendar/table_calendar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Event data class
-class Event {
-  String title;
-  DateTime date;
-  TimeOfDay time;
+class Exercise {
+  final String name;
+  final String description;
+  final int duration; // Duration for the exercise in seconds
+  final int reps;
+  final int sets;
+  final int rest; // Rest time in seconds after the exercise
+  final String imagePath;
 
-  Event({required this.title, required this.date, required this.time});
+  Exercise({
+    required this.name,
+    required this.description,
+    required this.duration,
+    required this.reps,
+    required this.sets,
+    required this.rest,
+    required this.imagePath,
+  });
 }
 
-// Main WorkoutScreen Widget
+List<Exercise> exercises = [
+  Exercise(
+    name: 'Push-ups',
+    description:
+        'Perform a standard push-up. Engage your core and keep your back straight while lowering and raising your body.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/pushups.jpg',
+  ),
+  Exercise(
+    name: 'Crunches',
+    description:
+        'Perform standard crunches. Keep your feet flat on the ground and use your abs to lift your shoulders off the mat.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/crunches.jpg',
+  ),
+  Exercise(
+    name: 'Plank',
+    description:
+        'Hold a plank position. Maintain a straight line from your head to your heels and keep your core tight.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/plank.jpg',
+  ),
+  Exercise(
+    name: 'Squats',
+    description:
+        'Perform standard squats. Keep your feet shoulder-width apart and lower your hips as if sitting in a chair.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/squats.jpg',
+  ),
+  Exercise(
+    name: 'Lunges',
+    description:
+        'Perform alternating lunges. Step forward with one leg and lower your hips until both knees are bent at about 90 degrees.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/lunges.jpg',
+  ),
+  Exercise(
+    name: 'Burpees',
+    description:
+        'Perform burpees. Start in a standing position, drop into a squat, kick your feet back into a plank, return to squat, and jump up.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/burpees.jpg',
+  ),
+  Exercise(
+    name: 'Mountain Climbers',
+    description:
+        'Perform mountain climbers. Start in a plank position and alternate bringing your knees towards your chest as quickly as possible.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/mountain_climbers.jpg',
+  ),
+  Exercise(
+    name: 'Bicycle Crunches',
+    description:
+        'Perform bicycle crunches. Lie on your back and alternate bringing your elbow to the opposite knee while extending the other leg.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/bicycle_crunches.jpg',
+  ),
+  Exercise(
+    name: 'Leg Raises',
+    description:
+        'Perform leg raises. Lie on your back with your legs straight and lift them towards the ceiling while keeping your core engaged.',
+    duration: 30,
+    reps: 10,
+    sets: 3,
+    rest: 10,
+    imagePath: 'assets/leg_raises.jpg',
+  ),
+];
+
 class WorkoutScreen extends StatefulWidget {
   @override
   _WorkoutScreenState createState() => _WorkoutScreenState();
 }
 
-// State class for WorkoutScreen
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  Map<DateTime, List<Event>> _events = {};
-  List<Event> _selectedEvents = [];
-  DateTime _selectedDay = DateTime.now();
-  DateTime _focusedDay = DateTime.now();
+  String _username = "User";
 
   @override
   void initState() {
     super.initState();
-    _selectedEvents = _events[_selectedDay] ?? [];
+    _fetchUserData();
   }
 
-  // Method to handle day selection
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
-    setState(() {
-      _selectedDay = selectedDay;
-      _focusedDay = focusedDay;
-      _selectedEvents = _events[selectedDay] ?? [];
-    });
+  Future<void> _fetchUserData() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('clients')
+          .doc(user.uid)
+          .get();
+      if (userDoc.exists) {
+        setState(() {
+          _username = userDoc['username'] ?? "User";
+        });
+      }
+    }
   }
 
-  // Method to add or edit events
-  void _addOrEditEvent({Event? event}) {
-    final titleController = TextEditingController(text: event?.title);
-    DateTime? selectedDate = event?.date;
-    TimeOfDay? selectedTime = event?.time;
-
-    // Show dialog for event details
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(event == null ? "Add New Event" : "Edit Event"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(labelText: "Event Title"),
-            ),
-            ElevatedButton(
-              child: Text(selectedDate == null ? "Pick date" : selectedDate.toString().split(' ')[0]),
-              onPressed: () async {
-                final pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate ?? DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2050)
-                );
-                if (pickedDate != null) {
-                  selectedDate = pickedDate;
-                }
-              },
-            ),
-            ElevatedButton(
-              child: Text(selectedTime == null ? "Pick time" : selectedTime!.format(context)),
-              onPressed: () async {
-                final pickedTime = await showTimePicker(
-                  context: context,
-                  initialTime: selectedTime ?? TimeOfDay.now(),
-                );
-                if (pickedTime != null) {
-                  selectedTime = pickedTime;
-                }
-              },
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Cancel'),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          TextButton(
-            child: Text('Save'),
-            onPressed: () {
-              final newEvent = Event(
-                title: titleController.text,
-                date: selectedDate!,
-                time: selectedTime!
-              );
-              if (event == null) {
-                // Add new event
-                _events[newEvent.date] ??= [];
-                _events[newEvent.date]!.add(newEvent);
-              } else {
-                // Update existing event
-                event.title = newEvent.title;
-                event.date = newEvent.date;
-                event.time = newEvent.time;
-                // Re-adding event to handle potential date change
-                _events[event.date]!.remove(event);
-                _events[newEvent.date]!.add(event);
-              }
-              Navigator.of(context).pop();
-              setState(() {
-                _selectedEvents = _events[_selectedDay] ?? [];
-              });
-            },
-          ),
-        ],
-      ),
-    );
+  void _logout() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => LoginScreen()));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
+      appBar: AppBar(
+        backgroundColor: Color(0xFF6279E4),
+        automaticallyImplyLeading: false,
+        title: Stack(
           children: [
-            _buildWelcomeSection(context),
-            _buildSummaryCards(context),
-            TableCalendar(
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: _focusedDay,
-              calendarFormat: CalendarFormat.week,
-              eventLoader: (day) => _events[day] ?? [],
-              selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: _onDaySelected,
-            ),
-            ListView.builder(
-              shrinkWrap: true,
-              itemCount: _selectedEvents.length,
-              itemBuilder: (context, index) => ListTile(
-                title: Text(_selectedEvents[index].title),
-                subtitle: Text('${_selectedEvents[index].time.format(context)}'),
-                onTap: () => _addOrEditEvent(event: _selectedEvents[index]),
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                "Start Activity",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addOrEditEvent(),
-        child: Icon(Icons.add),
-        tooltip: 'Add Event',
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: GridView.builder(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 16.0,
+            crossAxisSpacing: 16.0,
+          ),
+          itemCount: exercises.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => ExerciseDetailScreen(
+                    exerciseIndex: index,
+                  ),
+                ));
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color.fromARGB(255, 24, 24, 24),
+                  borderRadius: BorderRadius.circular(16.0),
+                  boxShadow: [
+                    BoxShadow(
+                      // color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      exercises[index].imagePath,
+                      height: 50,
+                      color: Color(0xFF6279E4),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      exercises[index].name,
+                      style: TextStyle(
+                        color: Color(0xFF6279E4),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
+}
 
-  Widget _buildWelcomeSection(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Placeholder image
-            radius: 30,
-          ),
-          Expanded(
-            child: Text(
-              'Welcome back!\nYour daily summary',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
+class ExerciseDetailScreen extends StatefulWidget {
+  final int exerciseIndex;
+
+  ExerciseDetailScreen({required this.exerciseIndex});
+
+  @override
+  _ExerciseDetailScreenState createState() => _ExerciseDetailScreenState();
+}
+
+class _ExerciseDetailScreenState extends State<ExerciseDetailScreen>
+    with TickerProviderStateMixin {
+  Timer? _timer;
+  int _remainingTime = 0;
+  bool _isRunning = false;
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingTime = exercises[widget.exerciseIndex].duration;
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: _remainingTime),
+    );
+  }
+
+  void startTimer() {
+    if (!_isRunning) {
+      _isRunning = true;
+      _controller.forward(from: 0.0);
+      _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+        if (_remainingTime > 0) {
+          setState(() => _remainingTime--);
+        } else {
+          timer.cancel();
+          setState(() => _isRunning = false);
+        }
+      });
+    }
+  }
+
+  void stopTimer() {
+    if (_isRunning) {
+      _controller.stop();
+      _timer?.cancel();
+      setState(() {
+        _isRunning = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final exercise = exercises[widget.exerciseIndex];
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xFF6279E4),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Stack(
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                exercise.name,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-              textAlign: TextAlign.right,
             ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.share),
+            onPressed: () {
+              // Implement share functionality
+            },
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryCards(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Padding(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              "Today's achievements\nGreat progress!",
-              textAlign: TextAlign.center,
+              exercise.name,
               style: TextStyle(
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 20),
+            Image.asset(
+              exercise.imagePath,
+              height: 250,
+            ),
+            SizedBox(height: 20),
+            Text(
+              exercise.description,
+              style: TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width:
+                      100, // Increase the width to make the circular indicator larger
+                  height:
+                      100, // Increase the height to make the circular indicator larger
+                  child: CircularProgressIndicator(
+                    value: _controller.value,
+                    strokeWidth: 8.0,
+                    backgroundColor: Colors.grey[300],
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFF6279E4)),
+                  ),
+                ),
+                Text(
+                  '${_remainingTime}s',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 40),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildSummaryCard('Duration', '3 hours 30', Icons.access_time),
-                _buildSummaryCard('Distance', '8.2 km', Icons.map),
-                _buildSummaryCard('Heart Rate', '120 bpm', Icons.favorite),
+                ElevatedButton(
+                  onPressed: startTimer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF6279E4),
+                    padding: EdgeInsets.zero, // Remove padding for square shape
+                    fixedSize: Size(60, 60), // Square button
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(10), // Small rounded corners
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.play_arrow,
+                    color: Colors.white,
+                    size: 42.0,
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: stopTimer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(15), // More rounded corners
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.pause, color: Colors.white, size: 42.0),
+                      SizedBox(width: 5), // Space between icon and text
+                      Text('Pause', style: TextStyle(color: Colors.white)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],
@@ -211,16 +408,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       ),
     );
   }
+}
 
-  Widget _buildSummaryCard(String title, String value, IconData iconData) {
-    return Column(
-      children: [
-        Icon(iconData, size: 48, color: Colors.orange),
-        SizedBox(height: 8),
-        Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        SizedBox(height: 4),
-        Text(value, style: TextStyle(color: Colors.grey, fontSize: 14)),
-      ],
+class LoginScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Placeholder for the login screen
+    return Scaffold(
+      body: Center(child: Text("Login Screen")),
     );
   }
 }
