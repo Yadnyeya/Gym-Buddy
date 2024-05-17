@@ -67,7 +67,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             ElevatedButton(
               onPressed: _register,
-              child: Text("Register"),
+              child: Text("Sign up"),
             ),
           ],
         ),
